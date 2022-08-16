@@ -3,124 +3,195 @@ import {withRouter, NextRouter} from "next/router";
 // import { useLocation } from "react-router-dom";
 import { useRouter } from "next/router";
 import Dots from "../components/Dots";
-type Props = {};
+type Props = {
+  router: NextRouter
+};
 type Names = {
   pl1: string;
   pl2: string;
   noOfGames: number;
 };
+type Player = {
+    name: string;
+    score: number;
+    img: string;
+  };
 interface WithRouterProps {
     router: NextRouter
   }
 const Play = (props: Props) => {
   // const noOfGames = 3;
-  console.log(props)
+  console.log(props.router.query)
   const router = useRouter()
   console.log(router.query)
-  const [player, setPlayer] = useState<number>(()=>{
-    const value = localStorage.getItem("player");
-    return value !== null
-      ? JSON.parse(value)
-      : Math.floor(Math.random() * 2);
+  const PlayerData  = props.router.query as unknown as Names
+  const [player, setPlayer] = useState<number>(Math.floor(Math.random() * 2));
+
+  const [winStatement, setWInStatement] = useState<string>("");
+  const [gameRunning, setGameRunning] = useState<Boolean>(false);
+  const [lastColumns, setLastColumn] = useState<number[]>([]);
+  const [lastPlayerWon, setLastPlayerWon] = useState<number>(-1);
+  const [gameNumber, setGameNumber] = useState<number>(0);
+  const [pl1, setPl1] = useState<string>(PlayerData.pl1)
+  const [pl2, setPl2] = useState(PlayerData.pl2)
+  const [noOfGames, setNoOfGames] = useState<number>(PlayerData.noOfGames)
+  const [counter, setCounter] = useState<number>(0)
+  const [player1, setPlayer1] = useState<Player>({
+    name: "",
+    score: 0,
+    img: ""
   });
-  const [winStatement, setWInStatement] = useState<string>(()=>{
-    const value = localStorage.getItem("winStatement");
-    return value !== null
-      ? JSON.parse(value)
-      : "";
+  const [player2, setPlayer2] = useState<Player>({
+    name: "",
+    score: 0,
+    img: ""
   });
-  const [gameRunning, setGameRunning] = useState<Boolean>(()=>{
-    const value = localStorage.getItem("gameRunning");
-    return value !== null
-      ? JSON.parse(value)
-      : false;
-  });
-  const [lastColumns, setLastColumn] = useState<number[]>(()=>{
-    const value = localStorage.getItem("lastColumns");
-    return value !== null
-      ? JSON.parse(value)
-      : [];
-  });
-  const [lastPlayerWon, setLastPlayerWon] = useState<number>(()=>{
-    const value = localStorage.getItem("lastPlayerWon");
-    return value !== null
-      ? JSON.parse(value)
-      : -1;
-  });
-  const [gameNumber, setGameNumber] = useState<number>(()=>{
-    const value = localStorage.getItem("gameNumber");
-    return value !== null
-      ? JSON.parse(value)
-      : 0;
-  });
-  const { pl1, pl2, noOfGames } = router.query as unknown as Names
-  const [counter, setCounter] = useState<number>(()=>{
-    const value = localStorage.getItem("counter");
-    return value !== null
-      ? JSON.parse(value)
-      : 0;
-  })
-  const [player1, setPlayer1] = useState(()=>{
-    const value = localStorage.getItem("player1");
-    return value !== null
-      ? JSON.parse(value)
-      : {
-        name: pl1,
-        score: 0,
-        img: localStorage.getItem("img1")
-          ? localStorage.getItem("img1")
-          : "/Images/player1default.svg",
-      };
-  });
-  const [player2, setPlayer2] = useState(()=>{
-    const value = localStorage.getItem("player2");
-    return value !== null
-      ? JSON.parse(value)
-      : {
-        name: pl2,
-        score: 0,
-        img: localStorage.getItem("img2")
-          ? localStorage.getItem("img2")
-          : "/Images/player2default.svg",
-      };
-  });
-  const [refArray, setRefArray] = useState(()=>{
-    const value = localStorage.getItem("refArray");
-    return value !== null
-      ? JSON.parse(value)
-      : Array(8)
-      .fill("")
-      .map(() => Array(8).fill(""));
-  }
-  );
+  const [refArray, setRefArray] = useState<string [][]>(Array(8).fill("").map(() => Array(8).fill("")));
+  const [dataFetched, setDataFetched] = useState<boolean>(false)
 
 
   useEffect(()=>{
-    localStorage.setItem("player", JSON.stringify(player))
+    console.log(PlayerData)
+    props.router.query.pl1 ? setPl1(props.router.query.pl1?.toString()) : ""
+    props.router.query.pl2 ? setPl2(props.router.query.pl2?.toString()) : ""
+    props.router.query.noOfGames ? setNoOfGames(parseInt(props.router.query.noOfGames.toString())) : ""
+
+      setNoOfGames(()=> PlayerData.noOfGames)
+    
+    setPlayer(()=>{
+        const value = localStorage.getItem("player");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : player;
+      })
+    
+    setWInStatement(()=>{
+        const value = localStorage.getItem("winStatement");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : "";
+      })
+
+    setGameRunning(()=>{
+        const value = localStorage.getItem("gameRunning");
+        console.log(value)
+        return value !== null 
+          ? JSON.parse(value)
+          : false;
+      })
+    
+    setLastColumn(()=>{
+        const value = localStorage.getItem("lastColumns");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : [];
+      })
+    
+    setLastPlayerWon(()=>{
+        const value = localStorage.getItem("lastPlayerWon");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : -1;
+      })
+    
+    setGameNumber(()=>{
+        const value = localStorage.getItem("gameNumber");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : 0;
+      })
+    
+    setCounter(()=>{
+        const value = localStorage.getItem("counter");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : 0;
+      })
+    
+    setPlayer1(()=>{
+        const value = localStorage.getItem("player1");
+        console.log(value)
+        return value !== null && JSON.parse(value).img !== ""
+          ? JSON.parse(value)
+          : {
+            name: pl1 ? pl1 : "",
+            score: 0,
+            img: localStorage.getItem("img1")
+              ? localStorage.getItem("img1")
+              : "/Images/player1default.svg",
+          };
+      })
+
+    setPlayer2(()=>{
+        const value = localStorage.getItem("player2");
+        console.log(value)
+        return value !== null && JSON.parse(value).img !== ""
+          ? JSON.parse(value)
+          : {
+            name: pl2 ? pl2 : "",
+            score: 0,
+            img: localStorage.getItem("img2")
+              ? localStorage.getItem("img2")
+              : "/Images/player2default.svg",
+          };
+      })
+
+    setRefArray(()=>{
+        const value = localStorage.getItem("refArray");
+        console.log(value)
+        return value !== null
+          ? JSON.parse(value)
+          : Array(8).fill("").map(() => Array(8).fill(""));
+      })
+
+    setDataFetched(true)
+
+    setNoOfGames(()=>{
+      const value = localStorage.getItem("noOfGames")
+      return value !== null 
+        ? parseInt(JSON.parse(value))
+        : noOfGames
+    })
+
+  }, [])
+
+
+
+  useEffect(()=>{
+    console.log(player, player1, player2)
+  })
+  useEffect(()=>{
+    dataFetched ? localStorage.setItem("player", JSON.stringify(player)) : ""
   }, [player])
   
   useEffect(()=>{
-    localStorage.setItem("winStatement", JSON.stringify(winStatement))
+    dataFetched ? localStorage.setItem("winStatement", JSON.stringify(winStatement)) : ""
   }, [winStatement])
 
   useEffect(()=>{
-    localStorage.setItem("gameRunning", JSON.stringify(gameRunning))
+    dataFetched ? localStorage.setItem("gameRunning", JSON.stringify(gameRunning)) : ""
   }, [gameRunning])
 
   useEffect(()=>{
-    localStorage.setItem("lastColumns", JSON.stringify(lastColumns))
+    dataFetched ? localStorage.setItem("lastColumns", JSON.stringify(lastColumns)) : ""
   }, [lastColumns])
 
   useEffect(()=>{
-    localStorage.setItem("lastPlayerWon", JSON.stringify(lastPlayerWon))
+    dataFetched ? localStorage.setItem("lastPlayerWon", JSON.stringify(lastPlayerWon)) : ""
   }, [lastPlayerWon])
 
   useEffect(()=>{
-    localStorage.setItem("gameNumber", JSON.stringify(gameNumber))
+    dataFetched ? localStorage.setItem("gameNumber", JSON.stringify(gameNumber)) : ""
   }, [gameNumber])
 
   useEffect(()=>{
-    localStorage.setItem("counter", JSON.stringify(counter))
+    dataFetched ? localStorage.setItem("counter", JSON.stringify(counter)) : ""
     if (counter === 64 && gameRunning) {
       console.log("draw")
       if ( noOfGames == gameNumber) {
@@ -135,21 +206,26 @@ const Play = (props: Props) => {
   }, [counter])
 
   useEffect(()=>{
-    localStorage.setItem("player1", JSON.stringify(player1))
+    dataFetched ? localStorage.setItem("player1", JSON.stringify(player1)) : ""
   }, [JSON.stringify(player1)])
 
   useEffect(()=>{
-    localStorage.setItem("player2", JSON.stringify(player2))
+    dataFetched ? localStorage.setItem("player2", JSON.stringify(player2)) : ""
   }, [JSON.stringify(player2)])
   useEffect(()=>{
-    localStorage.setItem("refArray", JSON.stringify(refArray))
+    dataFetched ? localStorage.setItem("refArray", JSON.stringify(refArray)) : ""
+    console.log("updatimg refarray")
   }, [JSON.stringify(refArray)])
+
+  useEffect(()=>{
+    noOfGames ? localStorage.setItem("noOfGames", JSON.stringify(noOfGames)) : ""
+  }, [noOfGames])
 
   // console.log(player1, player2);
 
   const undoFun = () => {
     console.log(lastColumns);
-    if (lastColumns.length === 0) {
+    if ( lastColumns.length === 0) {
       return;
     }
     const lastCln = lastColumns.shift();
@@ -262,12 +338,14 @@ const Play = (props: Props) => {
     if (!gameRunning) {
       return;
     }
+    
     const currentId = e.currentTarget.id;
     const cln = parseInt(currentId[1]);
     setLastColumn([cln, ...lastColumns]);
     console.log(e.currentTarget.id);
     for (let i = 7; i >= 0; i--) {
       if (refArray[i][cln] === "") {
+        console.log("Handling..")
         setCounter(counter + 1)
         refArray[i][cln] = player === 0 ? player1.img : player2.img;
         // setRefArray(refArray);
@@ -337,7 +415,7 @@ const Play = (props: Props) => {
                                 id={i + "" + j}
                                 fun={handleClick}
                                 player={player}
-                                img={refArray[i][j]}
+                                img={refArray !== null ? refArray[i][j] : ""}
                               />
                             );
                           });
